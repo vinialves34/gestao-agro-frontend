@@ -5,5 +5,5 @@ export interface Property {
   state: string
   state_registration: string
   total_area: string
-  producer_id: number
+  producer_id: number | null
 }

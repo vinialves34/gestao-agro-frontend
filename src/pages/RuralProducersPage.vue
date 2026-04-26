@@ -3,7 +3,15 @@ import { ref, onMounted } from "vue";
 import { ruralProducerApi } from "../services/api";
 import type { RuralProducer } from "../models/RuralProducer";
 import type { IPaginationData } from "../services/interfaces/IPaginationData";
-import { Button, Column, DataTable, Dialog, InputText } from "primevue";
+import {
+  Button,
+  Column,
+  DataTable,
+  Dialog,
+  FloatLabel,
+  InputMask,
+  InputText,
+} from "primevue";
 import { Sweetalert, ToastAlert } from "../utils/sweetalertUtils";
 import "primeicons/primeicons.css";
 
@@ -147,11 +155,31 @@ onMounted(loadRuralProducers);
       :header="dialogTitle"
       :pt="{ content: 'flex flex-col gap-4' }"
     >
-      <InputText v-model="form.cpf_cnpj" placeholder="CPF/CNPJ" />
-      <InputText v-model="form.name" placeholder="Nome" />
-      <InputText v-model="form.email" placeholder="Email" />
-      <InputText v-model="form.phone" placeholder="Telefone" />
-      <InputText v-model="form.address" placeholder="Endereço" />
+      <FloatLabel variant="in">
+        <InputText id="cpf_cnpj" v-model="form.cpf_cnpj" class="w-full" />
+        <label for="cpf_cnpj">CPF/CNPJ</label>
+      </FloatLabel>
+      <FloatLabel variant="in">
+        <InputText id="nome" v-model="form.name" class="w-full" />
+        <label for="nome">Nome</label>
+      </FloatLabel>
+      <FloatLabel variant="in">
+        <InputText id="email" v-model="form.email" class="w-full" />
+        <label for="email">E-mail</label>
+      </FloatLabel>
+      <FloatLabel variant="in">
+        <InputMask
+          id="telefone"
+          v-model="form.phone"
+          mask="(99) 99999-9999"
+          class="w-full"
+        />
+        <label for="telefone">Telefone</label>
+      </FloatLabel>
+      <FloatLabel variant="in">
+        <InputText id="endereco" v-model="form.address" class="w-full" />
+        <label for="endereco">Endereço</label>
+      </FloatLabel>
 
       <Button label="Salvar" @click="saveRuralProducer" />
     </Dialog>
