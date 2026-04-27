@@ -3,7 +3,7 @@
 
 <template>
   <div class="p-4">
-    <h1 class="text-2xl font-bold mb-4">Dashboard</h1>
+    <h1 class="text-2xl font-bold mb-4">Relatórios</h1>
     <p>Em construção...</p>
   </div>
 </template>

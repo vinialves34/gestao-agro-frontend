@@ -6,7 +6,7 @@ const route = useRoute();
 const mobileMenuOpen = ref(false);
 
 const navItems = [
-  { path: "/", name: "Dashboard", label: "Dashboard" },
+  { path: "/", name: "Reports", label: "Relatórios" },
   {
     path: "/produtores-rurais",
     name: "RuralProducers",

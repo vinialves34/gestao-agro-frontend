@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
-  { path: '/', name: 'Dashboard', component: () => import('../pages/DashboardPage.vue') },
+  { path: '/', name: 'Reports', component: () => import('../pages/ReportsPage.vue') },
   { path: '/produtores-rurais', name: 'RuralProducers', component: () => import('../pages/RuralProducersPage.vue') },
   { path: '/propriedades', name: 'Properties', component: () => import('../pages/PropertiesPage.vue') },
   { path: '/rebanhos', name: 'Herds', component: () => import('../pages/HerdsPage.vue') },

@@ -20,6 +20,7 @@ const paginationData = ref<IPaginationData>();
 const dialogTitle = ref("");
 const dialog = ref(false);
 const editing = ref(false);
+const datatableLoading = ref(true);
 
 const form = ref<RuralProducer>({
   name: "",
@@ -30,9 +31,20 @@ const form = ref<RuralProducer>({
 });
 
 const loadRuralProducers = async () => {
-  const response = await ruralProducerApi.getAll();
-  ruralProducers.value = response.data.data;
-  paginationData.value = response.data.meta;
+  const filters = "?paginate=1";
+  ruralProducerApi.getAll(filters).then(({ data: res }) => {
+    ruralProducers.value = res.data.data;
+  
+    paginationData.value = {
+      current_page: res.data.current_page,
+      last_page: res.data.last_page,
+      per_page: res.data.per_page,
+      total: res.data.total,
+      links: res.data.links
+    };
+
+    datatableLoading.value = false;
+  });
 };
 
 const saveRuralProducer = async () => {
@@ -121,7 +133,7 @@ onMounted(loadRuralProducers);
         :rows="10"
         :totalRecords="paginationData?.total"
         :rowsPerPageOptions="[10, 15, 20]"
-        :loading="!ruralProducers.length"
+        :loading="datatableLoading"
         tableStyle="min-width: 50rem"
       >
         <Column field="name" header="Nome" />
@@ -147,6 +159,12 @@ onMounted(loadRuralProducers);
             </div>
           </template>
         </Column>
+
+        <template #empty>
+          <div class="flex justify-center p-2">
+              <span class="text-gray-500">Nenhum registro encontrado.</span>
+          </div>
+        </template>
       </DataTable>
     </div>
 

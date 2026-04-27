@@ -22,12 +22,13 @@ const ruralProducers = ref<RuralProducer[]>([]);
 const paginationData = ref<IPaginationData>();
 const states = ref([]);
 const cities = ref([]);
-const selectedState = ref();
-const selectedCity = ref();
+const selectedState = ref("");
+const selectedCity = ref("");
 const selectedRuralProducer = ref();
 const dialogTitle = ref("");
 const dialog = ref(false);
 const editing = ref(false);
+const datatableLoading = ref(true);
 
 const form = ref<Property>({
   name: "",
@@ -39,9 +40,21 @@ const form = ref<Property>({
 });
 
 const loadProperties = async () => {
-  const response = await propertyApi.getAll();
-  properties.value = response.data.data;
-  paginationData.value = response.data.meta;
+  // const filters = "?paginate=1&city=Fortaleza";
+  const filters = "?paginate=1";
+  propertyApi.getAll(filters).then(({ data: res }) => {
+    properties.value = res.data.data;
+
+    paginationData.value = {
+      current_page: res.data.current_page,
+      last_page: res.data.last_page,
+      per_page: res.data.per_page,
+      total: res.data.total,
+      links: res.data.links,
+    };
+
+    datatableLoading.value = false;
+  });
 };
 
 const loadStates = async () => {
@@ -50,7 +63,7 @@ const loadStates = async () => {
 };
 
 const loadCities = async () => {
-  const response = await ibgeApi.getCitiesByState(selectedState.value.sigla);
+  const response = await ibgeApi.getCitiesByState(selectedState.value);
   cities.value = response.data;
 };
 
@@ -60,15 +73,12 @@ const loadRuralProducers = async () => {
 };
 
 const saveProperty = async () => {
-  form.value.state = selectedState.value ? selectedState.value.sigla : "";
-  form.value.city = selectedCity.value
-    ? selectedCity.value["municipio-nome"]
-    : "";
+  form.value.state = selectedState.value ? selectedState.value : "";
+  form.value.city = selectedCity.value ? selectedCity.value : "";
+
   form.value.producer_id = selectedRuralProducer.value
     ? selectedRuralProducer.value.id
     : null;
-
-  //CRIAR FILTRO PARA TRAZER DE UM FORMA MELHOR OS PROPRIETÁRIOS 
 
   if (editing.value && form.value.id) {
     await propertyApi.update(form.value.id, form.value);
@@ -85,14 +95,10 @@ const saveProperty = async () => {
 
 const editProperty = async (property: Property) => {
   form.value = { ...property };
-  selectedState.value = states.value.find(
-    (state: any) => state.sigla === property.state,
-  );
+  selectedState.value = property.state;
 
   await loadCities();
-  selectedCity.value = cities.value.find(
-    (city: any) => city["municipio-nome"].toUpperCase() === property.city,
-  );
+  selectedCity.value = property.city;
 
   selectedRuralProducer.value = ruralProducers.value.find(
     (ruralProducer: any) => ruralProducer.id === property.producer_id,
@@ -117,8 +123,8 @@ const resetForm = () => {
     state_registration: "",
     producer_id: null,
   };
-  selectedCity.value = ref();
-  selectedState.value = ref();
+  selectedState.value = "";
+  selectedCity.value = "";
   selectedRuralProducer.value = ref();
   editing.value = false;
 };
@@ -172,7 +178,7 @@ onMounted(() => {
         :rows="10"
         :totalRecords="paginationData?.total"
         :rowsPerPageOptions="[10, 15, 20]"
-        :loading="!properties.length"
+        :loading="datatableLoading"
         tableStyle="min-width: 50rem"
       >
         <Column field="name" header="Nome" />
@@ -199,6 +205,12 @@ onMounted(() => {
             </div>
           </template>
         </Column>
+
+        <template #empty>
+          <div class="flex justify-center p-2">
+            <span class="text-gray-500">Nenhum registro encontrado.</span>
+          </div>
+        </template>
       </DataTable>
     </div>
 
@@ -213,15 +225,16 @@ onMounted(() => {
       </FloatLabel>
       <FloatLabel variant="in">
         <Select
-          id="municipio"
-          v-model="selectedCity"
+          id="produtor_rural"
+          v-model="selectedRuralProducer"
+          @change="loadRuralProducers()"
           editable
-          :options="cities"
-          optionLabel="municipio-nome"
-          :disabled="!Object.keys(selectedState).find((key) => key === 'sigla')"
+          :options="ruralProducers"
+          optionLabel="name"
           class="w-full"
+          empty-message="Nenhum registro encontrado"
         />
-        <label for="municipio">Município</label>
+        <label for="produtor_rural">Proprietário</label>
       </FloatLabel>
       <FloatLabel variant="in">
         <Select
@@ -230,18 +243,38 @@ onMounted(() => {
           @change="
             () => {
               loadCities();
-              selectedCity = ref();
             }
           "
           editable
           :options="states"
-          optionLabel="sigla"
+          optionLabel="nome"
+          optionValue="sigla"
           class="w-full"
+          empty-message="Nenhum registro encontrado"
         />
         <label for="estado">Estado</label>
       </FloatLabel>
       <FloatLabel variant="in">
-        <InputText id="area_total" v-model="form.total_area" class="w-full" />
+        <Select
+          id="municipio"
+          v-model="selectedCity"
+          editable
+          :options="cities"
+          optionLabel="municipio-nome"
+          optionValue="municipio-nome"
+          :disabled="!selectedState.length"
+          class="w-full"
+          empty-message="Nenhum registro encontrado"
+        />
+        <label for="municipio">Município</label>
+      </FloatLabel>
+      <FloatLabel variant="in">
+        <InputText
+          id="area_total"
+          v-model="form.total_area"
+          type="number"
+          class="w-full"
+        />
         <label for="area_total">Área Total</label>
       </FloatLabel>
       <FloatLabel variant="in">
@@ -250,19 +283,7 @@ onMounted(() => {
           v-model="form.state_registration"
           class="w-full"
         />
-        <label for="incricao_estadual">Inscrição Estadual</label>
-      </FloatLabel>
-      <FloatLabel variant="in">
-        <Select
-          id="produtor_rural"
-          v-model="selectedRuralProducer"
-          @change="loadRuralProducers()"
-          editable
-          :options="ruralProducers"
-          optionLabel="name"
-          class="w-full"
-        />
-        <label for="produtor_rural">Proprietário</label>
+        <label for="inscricao_estadual">Inscrição Estadual</label>
       </FloatLabel>
       <Button label="Salvar" @click="saveProperty" />
     </Dialog>

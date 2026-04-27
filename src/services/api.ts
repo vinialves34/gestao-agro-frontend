@@ -1,11 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
 });
 
 export const ruralProducerApi = {
-  getAll: () => api.get('/rural_producers'),
+  getAll: (filters: string = '') => api.get('/rural_producers' + filters),
   getById: (id: number) => api.get(`/rural_producers/${id}`),
   create: (data: any) => api.post('/rural_producers', data),
   update: (id: number, data: any) => api.put(`/rural_producers/${id}`, data),
@@ -13,7 +13,7 @@ export const ruralProducerApi = {
 };
 
 export const propertyApi = {
-  getAll: () => api.get('/properties'),
+  getAll: (filters: string = '') => api.get('/properties' + filters),
   getById: (id: number) => api.get(`/properties/${id}`),
   create: (data: any) => api.post('/properties', data),
   update: (id: number, data: any) => api.put(`/properties/${id}`, data),
@@ -21,7 +21,7 @@ export const propertyApi = {
 };
 
 export const herdApi = {
-  getAll: () => api.get('/herds'),
+  getAll: (filters: string = '') => api.get('/herds' + filters),
   getById: (id: number) => api.get(`/herds/${id}`),
   create: (data: any) => api.post('/herds', data),
   update: (id: number, data: any) => api.put(`/herds/${id}`, data),
