@@ -195,15 +195,15 @@ onMounted(loadRuralProducers);
 
 <template>
   <section class="max-w-full mx-auto px-4 my-8 sm:px-6 lg:px-8">
-    <h2 class="text-2xl font-bold text-green-700">Produtores Rurais</h2>
-
-    <div class="flex flex-row-reverse my-4">
+    <div class="flex justify-between my-4">
+      <h2 class="flex flex-col justify-center text-2xl font-bold text-green-700">Produtores Rurais</h2>
       <Button
         label="Novo"
         icon="pi pi-plus"
         @click="
           ((dialog = true), (dialogTitle = 'Novo Produtor Rural'), resetForm())
         "
+        raised
       />
     </div>
 

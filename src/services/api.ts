@@ -8,11 +8,11 @@ const api = axios.create({
 });
 
 export const ruralProducerApi = {
-  getAll: (filterParams = {}) => api.get('/rural_producers', { params: filterParams }),
-  getById: (id: number) => api.get(`/rural_producers/${id}`),
-  create: (data: RuralProducer) => api.post('/rural_producers', data),
-  update: (id: number, data: any) => api.put(`/rural_producers/${id}`, data),
-  delete: (id: number) => api.delete(`/rural_producers/${id}`),
+  getAll: (filterParams = {}) => api.get('/rural-producers', { params: filterParams }),
+  getById: (id: number) => api.get(`/rural-producers/${id}`),
+  create: (data: RuralProducer) => api.post('/rural-producers', data),
+  update: (id: number, data: any) => api.put(`/rural-producers/${id}`, data),
+  delete: (id: number) => api.delete(`/rural-producers/${id}`),
 };
 
 export const propertyApi = {
@@ -35,3 +35,8 @@ export const specieApi = {
   getAll: () => api.get('/species'),
   getById: (id: number) => api.get(`/species/${id}`),
 };
+
+export const reportApi = {
+  getTotalHerdsBySpecies: () => api.get('/report/total/herds-by-specie'),
+  getTotalPropertiesByCity: () => api.get('/report/total/properties-by-city'),
+}

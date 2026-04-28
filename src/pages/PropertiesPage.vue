@@ -128,7 +128,7 @@ const saveProperty = async () => {
       await propertyApi.create(form.value);
       ToastAlert.fire("Criado!", "A propriedade foi criada.", "success");
     }
-    
+
     dialog.value = false;
     resetForm();
     loadProperties();
@@ -245,16 +245,26 @@ onMounted(() => {
 
 <template>
   <section class="max-w-full mx-auto px-4 my-8 sm:px-6 lg:px-8">
-    <h2 class="text-2xl font-bold text-green-700">Propriedades</h2>
+    <div class="flex justify-between my-4">
+      <h2 class="flex flex-col justify-center text-2xl font-bold text-green-700">Propriedades</h2>
 
-    <div class="flex flex-row-reverse my-4">
-      <Button
-        label="Novo"
-        icon="pi pi-plus"
-        @click="
-          ((dialog = true), (dialogTitle = 'Nova Propriedade'), resetForm())
-        "
-      />
+      <div class="flex gap-2">
+        <Button
+          label="Novo"
+          icon="pi pi-plus"
+          @click="
+            ((dialog = true), (dialogTitle = 'Nova Propriedade'), resetForm())
+          "
+          raised
+        />
+        <Button
+          label="Relatório"
+          icon="pi pi-file-export"
+          @click=""
+          severity="warn"
+          raised
+        />
+      </div>
     </div>
 
     <div class="rounded-lg shadow-sm">
