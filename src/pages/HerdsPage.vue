@@ -60,6 +60,33 @@ const form = ref<Herd>({
   purpose: "",
 });
 
+const validateForm = () => {
+  const requiredFields: Record<string, any> = {
+    ["Quantidade"]: form.value.quantity,
+    ["Espécie"]: form.value.species_id,
+    ["Propriedade"]: form.value.property_id,
+    ["Finalidade"]: form.value.purpose,
+  };
+  let listFields = "";
+
+  for (const field in requiredFields) {
+    if (!requiredFields[field]) {
+      listFields += `<li>"${field}"</li>`;
+    }
+  }
+
+  ToastAlert.fire(
+    "Atenção!",
+    `<div>
+      <p style="font-weight: bold;">Os campos são obrigatórios:</p>
+      <ul>${listFields}</ul>
+    </div>`,
+    "warning",
+  );
+
+  return !listFields.length;
+};
+
 const resetForm = () => {
   form.value = {
     property_id: null,
@@ -143,23 +170,27 @@ const editHerd = async (herd: Herd) => {
   dialogTitle.value = "Editar Rebanho";
 };
 
-const saveProperty = async () => {
+const saveHerd = async () => {
   form.value.property_id = selectedProperty.value
     ? selectedProperty.value
     : null;
   form.value.species_id = selectedSpecie.value ? selectedSpecie.value : null;
 
-  if (editing.value && form.value.id) {
-    await herdApi.update(form.value.id, form.value);
-    ToastAlert.fire("Atualizado!", "A rebanho foi atualizada.", "success");
-  } else {
-    await herdApi.create(form.value);
-    ToastAlert.fire("Criado!", "A rebanho foi criada.", "success");
-  }
+  if (validateForm()) {
+    if (editing.value && form.value.id) {
+      await herdApi.update(form.value.id, form.value);
+      ToastAlert.fire("Atualizado!", "A rebanho foi atualizada.", "success");
+    } else {
+      if (validateForm()) {
+        await herdApi.create(form.value);
+        ToastAlert.fire("Criado!", "A rebanho foi criada.", "success");
+      }
+    }
 
-  dialog.value = false;
-  resetForm();
-  loadHerds();
+    dialog.value = false;
+    resetForm();
+    loadHerds();
+  }
 };
 
 const onPage = (event: any) => {
@@ -321,7 +352,12 @@ onMounted(() => {
         <label for="especie">Espécie</label>
       </FloatLabel>
       <FloatLabel variant="in">
-        <InputNumber id="quantidade" v-model="form.quantity" class="w-full" />
+        <InputNumber
+          id="quantidade"
+          v-model="form.quantity"
+          required
+          class="w-full"
+        />
         <label for="quantidade">Quantidade</label>
       </FloatLabel>
       <FloatLabel variant="in">
@@ -329,7 +365,7 @@ onMounted(() => {
         <label for="finalidade">Finalidade</label>
       </FloatLabel>
 
-      <Button label="Salvar" icon="pi pi-save" @click="saveProperty" />
+      <Button label="Salvar" icon="pi pi-save" @click="saveHerd" />
     </Dialog>
   </section>
 </template>

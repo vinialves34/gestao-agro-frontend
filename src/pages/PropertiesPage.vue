@@ -79,7 +79,7 @@ const loadProperties = async () => {
 
   try {
     const { data: res } = await propertyApi.getAll(params);
-    
+
     properties.value = res.data.data;
     paginationData.value = {
       current_page: res.data.current_page,
@@ -116,17 +116,23 @@ const saveProperty = async () => {
     ? selectedRuralProducer.value.id
     : null;
 
-  if (editing.value && form.value.id) {
-    await propertyApi.update(form.value.id, form.value);
-    ToastAlert.fire("Atualizado!", "A propriedade foi atualizada.", "success");
-  } else {
-    await propertyApi.create(form.value);
-    ToastAlert.fire("Criado!", "A propriedade foi criada.", "success");
+  if (validateForm()) {
+    if (editing.value && form.value.id) {
+      await propertyApi.update(form.value.id, form.value);
+      ToastAlert.fire(
+        "Atualizado!",
+        "A propriedade foi atualizada.",
+        "success",
+      );
+    } else {
+      await propertyApi.create(form.value);
+      ToastAlert.fire("Criado!", "A propriedade foi criada.", "success");
+    }
+    
+    dialog.value = false;
+    resetForm();
+    loadProperties();
   }
-
-  dialog.value = false;
-  resetForm();
-  loadProperties();
 };
 
 const editProperty = async (property: Property) => {
@@ -199,6 +205,35 @@ const onFilter = () => {
     filterParams.value.page = 1;
     loadProperties();
   }, 500);
+};
+
+const validateForm = () => {
+  const requiredFields: Record<string, any> = {
+    ["Nome"]: form.value.name,
+    ["Produtor rural"]: form.value.producer_id,
+    ["Estado"]: form.value.state,
+    ["Cidade"]: form.value.city,
+    ["Inscrição estadual"]: form.value.state_registration,
+    ["Área total"]: form.value.total_area,
+  };
+  let listFields = "";
+
+  for (const field in requiredFields) {
+    if (!requiredFields[field]) {
+      listFields += `<li>"${field}"</li>`;
+    }
+  }
+
+  ToastAlert.fire(
+    "Atenção!",
+    `<div>
+      <p style="font-weight: bold;">Os campos são obrigatórios:</p>
+      <ul>${listFields}</ul>
+    </div>`,
+    "warning",
+  );
+
+  return !listFields.length;
 };
 
 onMounted(() => {
@@ -275,9 +310,7 @@ onMounted(() => {
           </template>
         </Column>
         <Column field="total_area" header="Área Total">
-          <template #body="{ data }">
-            {{ data.total_area }} m²
-          </template>
+          <template #body="{ data }"> {{ data.total_area }} m² </template>
           <template #filter="{}">
             <InputText
               v-model="filterParams.filters.total_area"

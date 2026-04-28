@@ -24,7 +24,7 @@ interface FilterParams {
     cpf_cnpj: string;
     phone: string;
     email: string;
-    address: string
+    address: string;
   };
 }
 
@@ -44,7 +44,7 @@ const filterParams = ref<FilterParams>({
     cpf_cnpj: "",
     phone: "",
     email: "",
-    address: ""
+    address: "",
   },
 });
 
@@ -83,21 +83,23 @@ const loadRuralProducers = async () => {
 };
 
 const saveRuralProducer = async () => {
-  if (editing.value && form.value.id) {
-    await ruralProducerApi.update(form.value.id, form.value);
-    ToastAlert.fire(
-      "Atualizado!",
-      "O produtor rural foi atualizado.",
-      "success",
-    );
-  } else {
-    await ruralProducerApi.create(form.value);
-    ToastAlert.fire("Criado!", "O produtor rural foi criado.", "success");
-  }
+  if (validateForm()) {
+    if (editing.value && form.value.id) {
+      await ruralProducerApi.update(form.value.id, form.value);
+      ToastAlert.fire(
+        "Atualizado!",
+        "O produtor rural foi atualizado.",
+        "success",
+      );
+    } else {
+      await ruralProducerApi.create(form.value);
+      ToastAlert.fire("Criado!", "O produtor rural foi criado.", "success");
+    }
 
-  dialog.value = false;
-  resetForm();
-  loadRuralProducers();
+    dialog.value = false;
+    resetForm();
+    loadRuralProducers();
+  }
 };
 
 const editRuralProducer = (producer: RuralProducer) => {
@@ -157,6 +159,34 @@ const onFilter = () => {
     filterParams.value.page = 1;
     loadRuralProducers();
   }, 500);
+};
+
+const validateForm = () => {
+  const requiredFields: Record<string, any> = {
+    ["CPF/CNPJ"]: form.value.cpf_cnpj,
+    ["Nome"]: form.value.name,
+    ["E-mail"]: form.value.email,
+    ["Telefone"]: form.value.phone,
+    ["Endereço"]: form.value.address,
+  };
+  let listFields = "";
+
+  for (const field in requiredFields) {
+    if (!requiredFields[field]) {
+      listFields += `<li>"${field}"</li>`;
+    }
+  }
+
+  ToastAlert.fire(
+    "Atenção!",
+    `<div>
+      <p style="font-weight: bold;">Os campos são obrigatórios:</p>
+      <ul>${listFields}</ul>
+    </div>`,
+    "warning",
+  );
+
+  return !listFields.length;
 };
 
 onMounted(loadRuralProducers);
