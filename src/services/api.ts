@@ -3,9 +3,8 @@ import type { RuralProducer } from '../models/RuralProducer';
 import type { Property } from '../models/Property';
 import type { Herd } from '../models/Herd';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-});
+const baseURL = import.meta.env.VITE_API_BASE_URL;
+const api = axios.create({ baseURL });
 
 export const ruralProducerApi = {
   getAll: (filterParams = {}) => api.get('/rural-producers', { params: filterParams }),
@@ -39,4 +38,5 @@ export const specieApi = {
 export const reportApi = {
   getTotalHerdsBySpecies: () => api.get('/report/total/herds-by-specie'),
   getTotalPropertiesByCity: () => api.get('/report/total/properties-by-city'),
+  downloadPropertyReport: () => `${baseURL}/report/download/properties`,
 }

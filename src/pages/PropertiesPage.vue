@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { propertyApi, ruralProducerApi } from "../services/api";
+import { propertyApi, reportApi, ruralProducerApi } from "../services/api";
 import type { Property } from "../models/Property";
 import type { IPaginationData } from "../services/interfaces/IPaginationData";
 import {
@@ -236,6 +236,10 @@ const validateForm = () => {
   return !listFields.length;
 };
 
+const downloadReport = () => {
+  return reportApi.downloadPropertyReport();
+}
+
 onMounted(() => {
   loadProperties();
   loadStates();
@@ -260,7 +264,9 @@ onMounted(() => {
         <Button
           label="Relatório"
           icon="pi pi-file-export"
-          @click=""
+          as="a"
+          :href="downloadReport()"
+          target="_blank"
           severity="warn"
           raised
         />
