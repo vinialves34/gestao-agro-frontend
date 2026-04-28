@@ -112,7 +112,7 @@ onMounted(async () => {
       <h2 class="flex flex-col justify-center text-2xl font-bold text-green-700">Relatórios</h2>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm flex justify-around gap-8 p-4">
+    <div class="bg-white rounded-lg shadow-sm flex justify-around gap-8 p-4 flex-col md:flex-row">
       <div class="card flex justify-center flex-col">
         <h2 class="text-center text-xl mb-2">Animais por espécies</h2>
         <Chart type="pie" :data="reportHerdBySpecies" :options="chartPieOptions" />
