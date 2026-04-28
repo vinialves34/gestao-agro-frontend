@@ -14,6 +14,7 @@ import {
 } from "primevue";
 import { Sweetalert, ToastAlert } from "../utils/sweetalertUtils";
 import "primeicons/primeicons.css";
+import { maskCpfCnpj, maskPhone } from "../utils/maskUtils";
 
 interface FilterParams {
   paginate: number;
@@ -234,7 +235,7 @@ onMounted(loadRuralProducers);
         </Column>
         <Column field="cpf_cnpj" header="CPF/CNPJ">
           <template #body="{ data }">
-            {{ data.cpf_cnpj }}
+            {{ maskCpfCnpj(data.cpf_cnpj) }}
           </template>
           <template #filter="{}">
             <InputText
@@ -260,7 +261,7 @@ onMounted(loadRuralProducers);
         </Column>
         <Column field="phone" header="Telefone">
           <template #body="{ data }">
-            {{ data.phone }}
+            {{ maskPhone(data.phone) }}
           </template>
           <template #filter="{}">
             <InputText
