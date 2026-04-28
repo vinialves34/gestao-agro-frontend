@@ -1,29 +1,32 @@
 import axios from 'axios';
+import type { RuralProducer } from '../models/RuralProducer';
+import type { Property } from '../models/Property';
+import type { Herd } from '../models/Herd';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
 });
 
 export const ruralProducerApi = {
-  getAll: (filters: string = '') => api.get('/rural_producers' + filters),
+  getAll: (filterParams = {}) => api.get('/rural_producers', { params: filterParams }),
   getById: (id: number) => api.get(`/rural_producers/${id}`),
-  create: (data: any) => api.post('/rural_producers', data),
+  create: (data: RuralProducer) => api.post('/rural_producers', data),
   update: (id: number, data: any) => api.put(`/rural_producers/${id}`, data),
   delete: (id: number) => api.delete(`/rural_producers/${id}`),
 };
 
 export const propertyApi = {
-  getAll: (filters: string = '') => api.get('/properties' + filters),
+  getAll: (filtersParams = {}) => api.get('/properties', { params: filtersParams }),
   getById: (id: number) => api.get(`/properties/${id}`),
-  create: (data: any) => api.post('/properties', data),
+  create: (data: Property) => api.post('/properties', data),
   update: (id: number, data: any) => api.put(`/properties/${id}`, data),
   delete: (id: number) => api.delete(`/properties/${id}`),
 };
 
 export const herdApi = {
-  getAll: (filters: string = '') => api.get('/herds' + filters),
+  getAll: (filtersParams = {}) => api.get('/herds', { params: filtersParams }),
   getById: (id: number) => api.get(`/herds/${id}`),
-  create: (data: any) => api.post('/herds', data),
+  create: (data: Herd) => api.post('/herds', data),
   update: (id: number, data: any) => api.put(`/herds/${id}`, data),
   delete: (id: number) => api.delete(`/herds/${id}`),
 };

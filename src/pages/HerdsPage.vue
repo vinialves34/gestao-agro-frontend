@@ -18,6 +18,18 @@ import {
 import { Sweetalert, ToastAlert } from "../utils/sweetalertUtils";
 import "primeicons/primeicons.css";
 
+interface FilterParams {
+  paginate: number;
+  page: number;
+  perPage: number;
+  filters: {
+    property_name: string;
+    specie_name: string;
+    purpose: string;
+    quantity: string;
+  };
+}
+
 const herds = ref<Herd[]>([]);
 const properties = ref<Property[]>([]);
 const species = ref<Specie[]>([]);
@@ -27,7 +39,19 @@ const selectedSpecie = ref();
 const dialogTitle = ref("");
 const dialog = ref(false);
 const editing = ref(false);
-const datatableLoading = ref(true);
+const loading = ref(false);
+let timeout = 0;
+const filterParams = ref<FilterParams>({
+  paginate: 1,
+  page: 1,
+  perPage: 10,
+  filters: {
+    property_name: "",
+    specie_name: "",
+    quantity: "",
+    purpose: "",
+  },
+});
 
 const form = ref<Herd>({
   property_id: null,
@@ -49,10 +73,19 @@ const resetForm = () => {
 };
 
 const loadHerds = async () => {
-  const filters = "?paginate=1";
-  herdApi.getAll(filters).then(({ data: res }) => {
-    herds.value = res.data.data;
+  loading.value = true;
 
+  const params = {
+    paginate: filterParams.value.paginate,
+    page: filterParams.value.page,
+    perPage: filterParams.value.perPage,
+    ...filterParams.value.filters,
+  };
+
+  try {
+    const { data: res } = await herdApi.getAll(params);
+
+    herds.value = res.data.data;
     paginationData.value = {
       current_page: res.data.current_page,
       last_page: res.data.last_page,
@@ -60,9 +93,9 @@ const loadHerds = async () => {
       total: res.data.total,
       links: res.data.links,
     };
-
-    datatableLoading.value = false;
-  });
+  } finally {
+    loading.value = false;
+  }
 };
 
 const loadProperties = async () => {
@@ -111,7 +144,9 @@ const editHerd = async (herd: Herd) => {
 };
 
 const saveProperty = async () => {
-  form.value.property_id = selectedProperty.value ? selectedProperty.value : null;
+  form.value.property_id = selectedProperty.value
+    ? selectedProperty.value
+    : null;
   form.value.species_id = selectedSpecie.value ? selectedSpecie.value : null;
 
   if (editing.value && form.value.id) {
@@ -127,6 +162,22 @@ const saveProperty = async () => {
   loadHerds();
 };
 
+const onPage = (event: any) => {
+  filterParams.value.page = event.page + 1;
+  filterParams.value.perPage = event.rows;
+
+  loadHerds();
+};
+
+const onFilter = () => {
+  clearTimeout(timeout);
+
+  timeout = setTimeout(() => {
+    filterParams.value.page = 1;
+    loadHerds();
+  }, 500);
+};
+
 onMounted(() => {
   loadHerds();
   loadProperties();
@@ -135,8 +186,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="max-w-7xl mx-auto px-4 my-8 sm:px-6 lg:px-8">
-    <h2 class="text-3xl font-bold text-green-700">Rebanhos</h2>
+  <section class="max-w-full mx-auto px-4 my-8 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold text-green-700">Rebanhos</h2>
 
     <div class="flex flex-row-reverse my-4">
       <Button
@@ -148,19 +199,69 @@ onMounted(() => {
 
     <div class="rounded-lg shadow-sm">
       <DataTable
-        paginator
         stripedRows
         :value="herds"
-        :rows="10"
+        :lazy="true"
+        :paginator="true"
+        :rows="filterParams.perPage"
         :totalRecords="paginationData?.total"
-        :rowsPerPageOptions="[10, 15, 20]"
-        :loading="datatableLoading"
+        :loading="loading"
+        @page="onPage"
+        filterDisplay="row"
         tableStyle="min-width: 50rem"
       >
-        <Column field="property.name" header="Propriedade" />
-        <Column field="species.name" header="Espécie" />
-        <Column field="quantity" header="Quantidade" />
-        <Column field="purpose" header="Propósito" />
+        <Column field="property.name" header="Propriedade">
+          <template #body="{ data }">
+            {{ data.property.name }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.property_name"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pela propriedade"
+            />
+          </template>
+        </Column>
+        <Column field="species.name" header="Espécie">
+          <template #body="{ data }">
+            {{ data.species.name }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.specie_name"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pela espécie"
+            />
+          </template>
+        </Column>
+        <Column field="quantity" header="Quantidade">
+          <template #body="{ data }">
+            {{ data.quantity }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.quantity"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pela quantidade"
+            />
+          </template>
+        </Column>
+        <Column field="purpose" header="Finalidade">
+          <template #body="{ data }">
+            {{ data.purpose }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.purpose"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo finalidade"
+            />
+          </template>
+        </Column>
 
         <Column header="Ações">
           <template #body="slotProps">
@@ -224,11 +325,11 @@ onMounted(() => {
         <label for="quantidade">Quantidade</label>
       </FloatLabel>
       <FloatLabel variant="in">
-        <InputText id="proposito" v-model="form.purpose" class="w-full" />
-        <label for="proposito">Propósito</label>
+        <InputText id="finalidade" v-model="form.purpose" class="w-full" />
+        <label for="finalidade">Finalidade</label>
       </FloatLabel>
 
-      <Button label="Salvar" @click="saveProperty" />
+      <Button label="Salvar" icon="pi pi-save" @click="saveProperty" />
     </Dialog>
   </section>
 </template>

@@ -15,12 +15,38 @@ import {
 import { Sweetalert, ToastAlert } from "../utils/sweetalertUtils";
 import "primeicons/primeicons.css";
 
+interface FilterParams {
+  paginate: number;
+  page: number;
+  perPage: number;
+  filters: {
+    name: string;
+    cpf_cnpj: string;
+    phone: string;
+    email: string;
+    address: string
+  };
+}
+
 const ruralProducers = ref<RuralProducer[]>([]);
 const paginationData = ref<IPaginationData>();
 const dialogTitle = ref("");
 const dialog = ref(false);
 const editing = ref(false);
-const datatableLoading = ref(true);
+const loading = ref(false);
+let timeout = 0;
+const filterParams = ref<FilterParams>({
+  paginate: 1,
+  page: 1,
+  perPage: 10,
+  filters: {
+    name: "",
+    cpf_cnpj: "",
+    phone: "",
+    email: "",
+    address: ""
+  },
+});
 
 const form = ref<RuralProducer>({
   name: "",
@@ -31,20 +57,29 @@ const form = ref<RuralProducer>({
 });
 
 const loadRuralProducers = async () => {
-  const filters = "?paginate=1";
-  ruralProducerApi.getAll(filters).then(({ data: res }) => {
+  loading.value = true;
+
+  const params = {
+    paginate: filterParams.value.paginate,
+    page: filterParams.value.page,
+    perPage: filterParams.value.perPage,
+    ...filterParams.value.filters,
+  };
+
+  try {
+    const { data: res } = await ruralProducerApi.getAll(params);
+
     ruralProducers.value = res.data.data;
-  
     paginationData.value = {
       current_page: res.data.current_page,
       last_page: res.data.last_page,
       per_page: res.data.per_page,
       total: res.data.total,
-      links: res.data.links
+      links: res.data.links,
     };
-
-    datatableLoading.value = false;
-  });
+  } finally {
+    loading.value = false;
+  }
 };
 
 const saveRuralProducer = async () => {
@@ -108,12 +143,28 @@ const confirmDelete = (id: number) => {
   });
 };
 
+const onPage = (event: any) => {
+  filterParams.value.page = event.page + 1;
+  filterParams.value.perPage = event.rows;
+
+  loadRuralProducers();
+};
+
+const onFilter = () => {
+  clearTimeout(timeout);
+
+  timeout = setTimeout(() => {
+    filterParams.value.page = 1;
+    loadRuralProducers();
+  }, 500);
+};
+
 onMounted(loadRuralProducers);
 </script>
 
 <template>
-  <section class="max-w-7xl mx-auto px-4 my-8 sm:px-6 lg:px-8">
-    <h2 class="text-3xl font-bold text-green-700">Produtores Rurais</h2>
+  <section class="max-w-full mx-auto px-4 my-8 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold text-green-700">Produtores Rurais</h2>
 
     <div class="flex flex-row-reverse my-4">
       <Button
@@ -127,20 +178,82 @@ onMounted(loadRuralProducers);
 
     <div class="rounded-lg shadow-sm">
       <DataTable
-        paginator
         stripedRows
         :value="ruralProducers"
-        :rows="10"
+        :lazy="true"
+        :paginator="true"
+        :rows="filterParams.perPage"
         :totalRecords="paginationData?.total"
-        :rowsPerPageOptions="[10, 15, 20]"
-        :loading="datatableLoading"
+        :loading="loading"
+        @page="onPage"
+        filterDisplay="row"
         tableStyle="min-width: 50rem"
       >
-        <Column field="name" header="Nome" />
-        <Column field="cpf_cnpj" header="CPF/CNPJ" />
-        <Column field="email" header="Email" />
-        <Column field="phone" header="Telefone" />
-        <Column field="address" header="Endereço" />
+        <Column field="name" header="Nome">
+          <template #body="{ data }">
+            {{ data.name }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.name"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo nome"
+            />
+          </template>
+        </Column>
+        <Column field="cpf_cnpj" header="CPF/CNPJ">
+          <template #body="{ data }">
+            {{ data.cpf_cnpj }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.cpf_cnpj"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo CPF/CNPJ"
+            />
+          </template>
+        </Column>
+        <Column field="email" header="Email">
+          <template #body="{ data }">
+            {{ data.email }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.email"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo e-mail"
+            />
+          </template>
+        </Column>
+        <Column field="phone" header="Telefone">
+          <template #body="{ data }">
+            {{ data.phone }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.phone"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo telefone"
+            />
+          </template>
+        </Column>
+        <Column field="address" header="Endereço">
+          <template #body="{ data }">
+            {{ data.address }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.address"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo endereço"
+            />
+          </template>
+        </Column>
 
         <Column header="Ações">
           <template #body="slotProps">
@@ -162,7 +275,7 @@ onMounted(loadRuralProducers);
 
         <template #empty>
           <div class="flex justify-center p-2">
-              <span class="text-gray-500">Nenhum registro encontrado.</span>
+            <span class="text-gray-500">Nenhum registro encontrado.</span>
           </div>
         </template>
       </DataTable>
@@ -199,7 +312,7 @@ onMounted(loadRuralProducers);
         <label for="endereco">Endereço</label>
       </FloatLabel>
 
-      <Button label="Salvar" @click="saveRuralProducer" />
+      <Button label="Salvar" icon="pi pi-save" @click="saveRuralProducer" />
     </Dialog>
   </section>
 </template>

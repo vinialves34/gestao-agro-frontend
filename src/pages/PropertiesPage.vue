@@ -17,6 +17,20 @@ import "primeicons/primeicons.css";
 import { ibgeApi } from "../services/ibge-api";
 import type { RuralProducer } from "../models/RuralProducer";
 
+interface FilterParams {
+  paginate: number;
+  page: number;
+  perPage: number;
+  filters: {
+    name: string;
+    city: string;
+    state: string;
+    state_registration: string;
+    total_area: string;
+    rural_producer_name: string;
+  };
+}
+
 const properties = ref<Property[]>([]);
 const ruralProducers = ref<RuralProducer[]>([]);
 const paginationData = ref<IPaginationData>();
@@ -28,7 +42,21 @@ const selectedRuralProducer = ref();
 const dialogTitle = ref("");
 const dialog = ref(false);
 const editing = ref(false);
-const datatableLoading = ref(true);
+const loading = ref(false);
+let timeout = 0;
+const filterParams = ref<FilterParams>({
+  paginate: 1,
+  page: 1,
+  perPage: 10,
+  filters: {
+    name: "",
+    city: "",
+    state: "",
+    state_registration: "",
+    total_area: "",
+    rural_producer_name: "",
+  },
+});
 
 const form = ref<Property>({
   name: "",
@@ -40,11 +68,19 @@ const form = ref<Property>({
 });
 
 const loadProperties = async () => {
-  // const filters = "?paginate=1&city=Fortaleza";
-  const filters = "?paginate=1";
-  propertyApi.getAll(filters).then(({ data: res }) => {
-    properties.value = res.data.data;
+  loading.value = true;
 
+  const params = {
+    paginate: filterParams.value.paginate,
+    page: filterParams.value.page,
+    perPage: filterParams.value.perPage,
+    ...filterParams.value.filters,
+  };
+
+  try {
+    const { data: res } = await propertyApi.getAll(params);
+    
+    properties.value = res.data.data;
     paginationData.value = {
       current_page: res.data.current_page,
       last_page: res.data.last_page,
@@ -52,9 +88,9 @@ const loadProperties = async () => {
       total: res.data.total,
       links: res.data.links,
     };
-
-    datatableLoading.value = false;
-  });
+  } finally {
+    loading.value = false;
+  }
 };
 
 const loadStates = async () => {
@@ -149,6 +185,22 @@ const confirmDelete = (id: number) => {
   });
 };
 
+const onPage = (event: any) => {
+  filterParams.value.page = event.page + 1;
+  filterParams.value.perPage = event.rows;
+
+  loadProperties();
+};
+
+const onFilter = () => {
+  clearTimeout(timeout);
+
+  timeout = setTimeout(() => {
+    filterParams.value.page = 1;
+    loadProperties();
+  }, 500);
+};
+
 onMounted(() => {
   loadProperties();
   loadStates();
@@ -157,8 +209,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="max-w-7xl mx-auto px-4 my-8 sm:px-6 lg:px-8">
-    <h2 class="text-3xl font-bold text-green-700">Propriedades</h2>
+  <section class="max-w-full mx-auto px-4 my-8 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold text-green-700">Propriedades</h2>
 
     <div class="flex flex-row-reverse my-4">
       <Button
@@ -172,21 +224,95 @@ onMounted(() => {
 
     <div class="rounded-lg shadow-sm">
       <DataTable
-        paginator
         stripedRows
         :value="properties"
-        :rows="10"
+        :lazy="true"
+        :paginator="true"
+        :rows="filterParams.perPage"
         :totalRecords="paginationData?.total"
-        :rowsPerPageOptions="[10, 15, 20]"
-        :loading="datatableLoading"
+        :loading="loading"
+        @page="onPage"
+        filterDisplay="row"
         tableStyle="min-width: 50rem"
       >
-        <Column field="name" header="Nome" />
-        <Column field="city" header="Município" />
-        <Column field="state" header="Estado" />
-        <Column field="total_area" header="Área Total" />
-        <Column field="state_registration" header="Inscrição Estadual" />
-        <Column field="rural_producer.name" header="Proprietário" />
+        <Column field="name" header="Nome">
+          <template #body="{ data }">
+            {{ data.name }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.name"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo nome"
+            />
+          </template>
+        </Column>
+        <Column field="city" header="Município">
+          <template #body="{ data }">
+            {{ data.city }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.city"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo município"
+            />
+          </template>
+        </Column>
+        <Column field="state" header="Estado">
+          <template #body="{ data }">
+            {{ data.state }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.state"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo estado"
+            />
+          </template>
+        </Column>
+        <Column field="total_area" header="Área Total">
+          <template #body="{ data }">
+            {{ data.total_area }} m²
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.total_area"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pela área total"
+            />
+          </template>
+        </Column>
+        <Column field="state_registration" header="Inscrição Estadual">
+          <template #body="{ data }">
+            {{ data.state_registration }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.state_registration"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pela inscrição"
+            />
+          </template>
+        </Column>
+        <Column field="rural_producer.name" header="Proprietário">
+          <template #body="{ data }">
+            {{ data.rural_producer.name }}
+          </template>
+          <template #filter="{}">
+            <InputText
+              v-model="filterParams.filters.rural_producer_name"
+              type="text"
+              @input="onFilter()"
+              placeholder="Buscar pelo proprietário"
+            />
+          </template>
+        </Column>
 
         <Column header="Ações">
           <template #body="slotProps">
@@ -275,7 +401,7 @@ onMounted(() => {
           type="number"
           class="w-full"
         />
-        <label for="area_total">Área Total</label>
+        <label for="area_total">Área Total (m²)</label>
       </FloatLabel>
       <FloatLabel variant="in">
         <InputText
@@ -285,7 +411,7 @@ onMounted(() => {
         />
         <label for="inscricao_estadual">Inscrição Estadual</label>
       </FloatLabel>
-      <Button label="Salvar" @click="saveProperty" />
+      <Button label="Salvar" icon="pi pi-save" @click="saveProperty" />
     </Dialog>
   </section>
 </template>
