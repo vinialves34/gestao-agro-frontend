@@ -4,7 +4,7 @@ import type { Herd } from "../models/Herd";
 import type { IPaginationData } from "../services/interfaces/IPaginationData";
 import type { Property } from "../models/Property";
 import type { Specie } from "../models/Specie";
-import { herdApi, propertyApi, specieApi } from "../services/api";
+import { herdApi, propertyApi, reportApi, specieApi } from "../services/api";
 import {
   Button,
   Column,
@@ -209,6 +209,10 @@ const onFilter = () => {
   }, 500);
 };
 
+const downloadReport = () => {
+  return reportApi.downloadHerdReport();
+}
+
 onMounted(() => {
   loadHerds();
   loadProperties();
@@ -231,7 +235,9 @@ onMounted(() => {
           label="Relatório"
           icon="pi pi-file-export"
           severity="warn"
-          @click=""
+          as="a"
+          :href="downloadReport()"
+          target="_blank"
           raised
         />
       </div>

@@ -39,4 +39,5 @@ export const reportApi = {
   getTotalHerdsBySpecies: () => api.get('/report/total/herds-by-specie'),
   getTotalPropertiesByCity: () => api.get('/report/total/properties-by-city'),
   downloadPropertyReport: () => `${baseURL}/report/download/properties`,
+  downloadHerdReport: () => `${baseURL}/report/download/herds`,
 }
